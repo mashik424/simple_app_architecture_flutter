@@ -44,7 +44,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => TodosProvider(
-        localStorageRepo: todoRepository,
+        repository: todoRepository,
       ),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

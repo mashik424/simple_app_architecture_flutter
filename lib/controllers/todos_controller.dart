@@ -4,8 +4,8 @@ import 'package:todoist/repositories/todo_repository/todo_repository.dart';
 
 class TodosProvider with ChangeNotifier {
   TodosProvider({
-    required TodoRepository localStorageRepo,
-  }) : _localStorageRepo = localStorageRepo {
+    required TodoRepository repository,
+  }) : _repository = repository {
     _initTodos();
   }
 
@@ -14,20 +14,20 @@ class TodosProvider with ChangeNotifier {
   List<Todo> get todos => _todos;
 
   Future<void> _initTodos() async {
-    _todos.addAll(await _localStorageRepo.getAllTodos());
+    _todos.addAll(await _repository.getAllTodos());
     notifyListeners();
   }
 
-  final TodoRepository _localStorageRepo;
+  final TodoRepository _repository;
 
   Future<void> addTodo(String title) async {
-    final todo = await _localStorageRepo.addTodo(title);
+    final todo = await _repository.addTodo(title);
     _todos.add(todo);
     notifyListeners();
   }
 
   void updateTodo(Todo todo) async {
-    final updated = await _localStorageRepo.updateTodo(todo);
+    final updated = await _repository.updateTodo(todo);
     final index = _todos.indexWhere((e) => e.id == todo.id);
     if (index < 0) return;
     _todos[index] = updated;
@@ -35,7 +35,7 @@ class TodosProvider with ChangeNotifier {
   }
 
   void deleteTodo(String id) async {
-    await _localStorageRepo.removeTodo(id);
+    await _repository.removeTodo(id);
     _todos.removeWhere((todo) => todo.id == id);
     notifyListeners();
   }
