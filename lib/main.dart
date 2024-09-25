@@ -33,6 +33,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    // TODO(everyone): You can change the repository implementation here
     todoRepository = LocalTodoRepository(
       sharedPreferences: widget.sharedPreferences,
     );
