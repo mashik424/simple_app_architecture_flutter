@@ -12,7 +12,7 @@ import 'package:todoist/repositories/todo_repository/todo_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final SharedPreferences prefs = await SharedPreferences.getInstance();
 
   runApp(MyApp(sharedPreferences: prefs));
