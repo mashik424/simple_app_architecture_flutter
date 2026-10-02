@@ -1,24 +1,33 @@
-import 'package:flutter/material.dart';
+import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
 import 'package:todoist/models/todo.dart';
 import 'package:todoist/repositories/todo_repository/todo_repository.dart';
 
-class TodosProvider with ChangeNotifier {
-  TodosProvider({
-    required TodoRepository repository,
-  }) : _repository = repository {
+class TodosProvider extends ChangeNotifier {
+  TodosProvider({required TodoRepository repository})
+    : _repository = repository {
     _initTodos();
   }
 
+  final TodoRepository _repository;
   final List<Todo> _todos = [];
 
-  List<Todo> get todos => _todos;
+  bool _isLoading = true;
+  bool get isLoading => _isLoading;
+
+  UnmodifiableListView<Todo> get todos => UnmodifiableListView(_todos);
+
+  int get remainingCount => _todos.where((todo) => !todo.isCompleted).length;
 
   Future<void> _initTodos() async {
-    _todos.addAll(await _repository.getAllTodos());
-    notifyListeners();
+    try {
+      _todos.addAll(await _repository.getAllTodos());
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-
-  final TodoRepository _repository;
 
   Future<void> addTodo(String title) async {
     final todo = await _repository.addTodo(title);
@@ -26,7 +35,7 @@ class TodosProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateTodo(Todo todo) async {
+  Future<void> updateTodo(Todo todo) async {
     final updated = await _repository.updateTodo(todo);
     final index = _todos.indexWhere((e) => e.id == todo.id);
     if (index < 0) return;
@@ -34,7 +43,10 @@ class TodosProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void deleteTodo(String id) async {
+  Future<void> toggleTodo(Todo todo) =>
+      updateTodo(todo.copyWith(isCompleted: !todo.isCompleted));
+
+  Future<void> deleteTodo(String id) async {
     await _repository.removeTodo(id);
     _todos.removeWhere((todo) => todo.id == id);
     notifyListeners();

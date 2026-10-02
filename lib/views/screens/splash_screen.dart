@@ -1,6 +1,7 @@
-// ignore_for_file: use_build_context_synchronously
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:todoist/routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,13 +11,21 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  Timer? _timer;
+
   @override
   void initState() {
-    Future.delayed(
-      const Duration(seconds: 3),
-      () => Navigator.of(context).pushReplacementNamed('todos'),
-    );
     super.initState();
+    _timer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      unawaited(Navigator.of(context).pushReplacementNamed(Routes.todos));
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -24,7 +33,6 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Spacer(),
           Text(

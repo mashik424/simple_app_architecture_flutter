@@ -6,58 +6,58 @@ import 'package:todoist/views/modals/add_todo_bs.dart';
 import 'package:todoist/views/widgets/todo_list_item.dart';
 
 class TodoListScreen extends StatelessWidget {
-  const TodoListScreen({
-    super.key,
-  });
+  const TodoListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<TodosProvider>();
+    final todos = provider.todos;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Todoist'),
         actions: [
-          Consumer<TodosProvider>(
-            builder: (context, value, child) => Text(
-              value.todos.length.toString(),
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ),
-          const SizedBox(width: 16)
-        ],
-      ),
-      body: Consumer<TodosProvider>(
-        builder: (context, provider, child) => ListView.builder(
-          itemCount: provider.todos.length,
-          itemBuilder: (context, index) => TodoListItem(
-            todo: provider.todos[index],
-            onTap: () => _openAddToDoBS(context, todo: provider.todos[index]),
-            onCheckboxChanged: (completed) => provider.updateTodo(
-              provider.todos[index].copyWith(
-                isCompleted: completed,
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 16),
+            child: Center(
+              child: Text(
+                '${provider.remainingCount}/${todos.length}',
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
-            onDeletePressed: (todoId) => provider.deleteTodo(todoId),
           ),
-        ),
+        ],
       ),
+      body: switch ((provider.isLoading, todos.isEmpty)) {
+        (true, _) => const Center(child: CircularProgressIndicator()),
+        (false, true) => const Center(child: Text('No todos yet. Add one!')),
+        _ => ListView.builder(
+          itemCount: todos.length,
+          itemBuilder: (context, index) {
+            final todo = todos[index];
+            return TodoListItem(
+              key: ValueKey(todo.id),
+              todo: todo,
+              onTap: () => _openAddTodoBS(context, todo: todo),
+              onCheckboxChanged: (_) => provider.toggleTodo(todo),
+              onDeletePressed: provider.deleteTodo,
+            );
+          },
+        ),
+      },
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openAddToDoBS(context),
-        tooltip: 'Add TODO',
+        onPressed: () => _openAddTodoBS(context),
+        tooltip: 'Add Todo',
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Future<void> _openAddToDoBS(
-    BuildContext context, {
-    Todo? todo,
-  }) async {
-    await showModalBottomSheet(
-      context: context,
-      builder: (context) => AddTodoBS(
-        todo: todo,
-      ),
-    );
-  }
+  Future<void> _openAddTodoBS(BuildContext context, {Todo? todo}) =>
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (context) => AddTodoBS(todo: todo),
+      );
 }

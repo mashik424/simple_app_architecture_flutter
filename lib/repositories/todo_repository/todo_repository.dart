@@ -1,6 +1,6 @@
 import 'package:todoist/models/todo.dart';
 
-abstract class TodoRepository {
+abstract interface class TodoRepository {
   Future<Todo> addTodo(String title);
 
   Future<List<Todo>> addTodos(List<String> titles);
@@ -9,7 +9,7 @@ abstract class TodoRepository {
 
   Future<void> removeTodo(String id);
 
-  Future<void> clearAllTodos(String id);
+  Future<void> clearAllTodos();
 
   Future<List<Todo>> getAllTodos();
 

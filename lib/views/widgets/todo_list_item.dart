@@ -17,16 +17,23 @@ class TodoListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListTile(
       onTap: onTap,
-      title: Text(todo.title),
-      leading: Checkbox(
-        value: todo.isCompleted,
-        onChanged: onCheckboxChanged,
+      title: Text(
+        todo.title,
+        style: todo.isCompleted
+            ? TextStyle(
+                decoration: TextDecoration.lineThrough,
+                color: theme.colorScheme.onSurfaceVariant,
+              )
+            : null,
       ),
+      leading: Checkbox(value: todo.isCompleted, onChanged: onCheckboxChanged),
       trailing: IconButton(
         onPressed: () => onDeletePressed?.call(todo.id),
-        icon: const Icon(Icons.delete),
+        tooltip: 'Delete',
+        icon: const Icon(Icons.delete_outline),
       ),
     );
   }

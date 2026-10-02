@@ -1,4 +1,4 @@
-abstract class AuthRepository {
+abstract interface class AuthRepository {
   Future<void> register();
 
   Future<void> login();

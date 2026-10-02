@@ -3,83 +3,71 @@ import 'package:todoist/models/todo.dart';
 import 'package:todoist/repositories/todo_repository/todo_repository.dart';
 
 class FirestoreTodoRepository implements TodoRepository {
-  final _collection = FirebaseFirestore.instance.collection('todos');
+  FirestoreTodoRepository({FirebaseFirestore? firestore})
+    : _collection = (firestore ?? FirebaseFirestore.instance).collection(
+        'todos',
+      );
+
+  final CollectionReference<Map<String, dynamic>> _collection;
 
   @override
   Future<Todo> addTodo(String title) async {
-    // Create a new document reference in the 'users' collection
-    DocumentReference docRef = _collection.doc();
-
-    // Get the document ID
-    String docId = docRef.id;
+    // Create the document reference first so its generated ID can be stored
+    // as one of the document's fields.
+    final docRef = _collection.doc();
+    final now = DateTime.now();
 
     final todo = Todo(
-      id: docId,
+      id: docRef.id,
       title: title,
       isCompleted: false,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: now,
+      updatedAt: now,
     );
 
-    // Add the document with the ID as one of its fields
-    // await docRef.set(todo.copyWith(id: docId).toJson());
     await docRef.set(todo.toJson());
 
     return todo;
   }
 
   @override
-  Future<List<Todo>> addTodos(List<String> titles) async {
-    List<Todo> todos = [];
-    for (final title in titles) {
-      final todo = await addTodo(title);
-      todos.add(todo);
-    }
-
-    return todos;
-  }
+  Future<List<Todo>> addTodos(List<String> titles) =>
+      Future.wait(titles.map(addTodo));
 
   @override
-  Future<void> clearAllTodos(String id) async {
-    await _collection.get().then((snapshot) {
-      for (final doc in snapshot.docs) {
-        doc.reference.delete();
-      }
-    });
+  Future<void> clearAllTodos() async {
+    final snapshot = await _collection.get();
+    final batch = _collection.firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
   }
 
   @override
   Future<List<Todo>> getAllTodos() async {
-    final snapshot = await _collection.get();
+    final snapshot = await _collection.orderBy('created_at').get();
 
-    return snapshot.docs.map((doc) => Todo.fromJson(doc.data())).toList();
+    return [for (final doc in snapshot.docs) Todo.fromJson(doc.data())];
   }
 
   @override
   Future<Todo> getTodo(String id) async {
     final snapshot = await _collection.doc(id).get();
     final data = snapshot.data();
-    if (data != null) {
-      return Todo.fromJson(data);
-    } else {
-      throw Exception('Could not find an item with the given id');
+    if (data == null) {
+      throw StateError('Could not find a todo with id "$id"');
     }
+    return Todo.fromJson(data);
   }
 
   @override
-  Future<void> removeTodo(String id) async {
-    final snapshot = await _collection.doc(id).get();
-    await snapshot.reference.delete();
-  }
+  Future<void> removeTodo(String id) => _collection.doc(id).delete();
 
   @override
   Future<Todo> updateTodo(Todo todo) async {
-    var snapshot = await _collection.doc(todo.id).get();
-
-    await snapshot.reference.set(todo.toJson());
-
-    snapshot = await snapshot.reference.get();
-
-    return Todo.fromJson(snapshot.data()!);
+    final updated = todo.copyWith(updatedAt: DateTime.now());
+    await _collection.doc(todo.id).set(updated.toJson());
+    return updated;
   }
 }
